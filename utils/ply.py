@@ -1,21 +1,31 @@
+# ==============================================================================
 #
+#      NOT MINE, Credit to Hugues THOMAS, TA of the MVA Point Cloud course
+#
+# ==============================================================================
+
+
+
+
+
+
 #
 #      0===============================0
 #      |    PLY files reader/writer    |
 #      0===============================0
 #
 #
-#------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #
 #      function to read/write .ply files
 #
-#------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #
 #      Hugues THOMAS - 10/02/2017
 #
 
 
-#------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #
 #          Imports and global variables
 #      \**********************************/
@@ -53,7 +63,7 @@ valid_formats = {'ascii': '', 'binary_big_endian': '>',
                  'binary_little_endian': '<'}
 
 
-#------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #
 #           Functions
 #       \***************/
@@ -68,7 +78,7 @@ def parse_header(plyfile, ext):
 
     while b'end_header' not in line and line != b'':
         line = plyfile.readline()
-    
+
         if b'element' in line:
             line = line.split()
             num_points = int(line[2])
@@ -109,7 +119,7 @@ def read_ply(filename):
     >>> data = read_ply('example.ply')
     >>> values = data['values']
     array([0, 0, 1, 1, 0])
-    
+
     >>> points = np.vstack((data['x'], data['y'], data['z'])).T
     array([[ 0.466  0.595  0.324]
            [ 0.538  0.407  0.654]
@@ -164,7 +174,7 @@ def header_properties(field_list, field_names):
     return lines
 
 
-        
+
 
 def write_ply(filename, field_list, field_names):
     """
@@ -173,16 +183,16 @@ def write_ply(filename, field_list, field_names):
     Parameters
     ----------
     filename : string
-        the name of the file to which the data is saved. A '.ply' extension will be appended to the 
+        the name of the file to which the data is saved. A '.ply' extension will be appended to the
         file name if it does no already have one.
 
     field_list : list, tuple, numpy array
-        the fields to be saved in the ply file. Either a numpy array, a list of numpy arrays or a 
-        tuple of numpy arrays. Each 1D numpy array and each column of 2D numpy arrays are considered 
-        as one field. 
+        the fields to be saved in the ply file. Either a numpy array, a list of numpy arrays or a
+        tuple of numpy arrays. Each 1D numpy array and each column of 2D numpy arrays are considered
+        as one field.
 
     field_names : list
-        the name of each fields as a list of strings. Has to be the same length as the number of 
+        the name of each fields as a list of strings. Has to be the same length as the number of
         fields.
 
     Examples
@@ -215,7 +225,7 @@ def write_ply(filename, field_list, field_names):
     n_points = [field.shape[0] for field in field_list]
     if not np.all(np.equal(n_points, n_points[0])):
         print('wrong field dimensions')
-        return False    
+        return False
 
     # Check if field_names and field_list have same nb of column
     n_fields = np.sum([field.shape[1] for field in field_list])

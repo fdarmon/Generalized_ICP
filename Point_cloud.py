@@ -29,10 +29,15 @@ class Point_cloud:
         self.points = np.vstack((tmp['x'],tmp['y'],tmp['z'])).T
         self._init()
 
-    def init_from_transfo(self, initial, R,t):
+    def init_from_transfo(self, initial, R = None,t = None):
         """
         Initialize a point cloud from another point cloud and a tranformation
         """
+        if R is None:
+            R = np.eye(3)
+        if t is None:
+            t = np.zeros(3)
+
         self.points = initial.points @ R.T + t
         self._init()
 
@@ -67,26 +72,34 @@ class Point_cloud:
             self.all_eigenvalues,self.all_eigenvectors = self.neighborhood_PCA()
         return self.all_eigenvectors
 
-    def get_projection_matrix_point2plane(self):
-        print("Computing projection matrices")
+    def get_projection_matrix_point2plane(self, indexes = None):
+        """
+        Get the projection matrix on the plane defined at each point
+        Possibility to have it only on indexes
+        """
+        if indexes is None:
+            indexes = np.arange(self.n)
+
         all_eigenvectors = self.get_eigenvectors()
         normals = all_eigenvectors[:,:,0]
         normals = normals / np.linalg.norm(normals, axis = 1, keepdims = True)
-        return np.array([n[:,None]*n[None,:] for n in normals])
+        return np.array([normals[i,:,None]*normals[i,None,:] for i in indexes])
 
-    def get_covariance_matrices_plane2plane(self, epsilon  = 1e-3):
+    def get_covariance_matrices_plane2plane(self, epsilon  = 1e-3,indexes = None):
         """
         Returns C_A covariance matrix used
+        Possibility to have it only on indexes
         """
-        print("Computing covariance matrices for each point")
+        if indexes is None:
+            indexes = np.arange(self.n)
         d = 3
-        cov_mat = np.zeros((self.n,d,d))
+        new_n = indexes.shape[0]
+        cov_mat = np.zeros((new_n,d,d))
         all_eigenvectors = self.get_eigenvectors()
         dz_cov_mat = np.eye(d)
         dz_cov_mat[0,0] = epsilon
-        for i in range(self.n):
-            U = all_eigenvectors[i]
+        for i in range(new_n):
+            U = all_eigenvectors[indexes[i]]
             cov_mat[i,:,:] = U @ dz_cov_mat @ U.T
 
-        print("Done")
         return cov_mat

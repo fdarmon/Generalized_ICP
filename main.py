@@ -23,15 +23,16 @@ if __name__ == '__main__':
 
     if True:
         # Cloud paths
-        bunny_o_path = 'data/bunny_original.ply'
-        bunny_r_path = 'data/bunny_returned.ply'
+        NDDC_1_path = './data/Notre_Dame_Des_Champs_1.ply'
+        NDDC_2_path = './data/Notre_Dame_Des_Champs_2.ply'
+
 
         data = Point_cloud()
-        data.init_from_ply(bunny_r_path)
+        data.init_from_ply(NDDC_1_path)
 
         ref = Point_cloud()
-        ref.init_from_ply(bunny_o_path)
-        t,R = ICP(data,ref, method = "point2plane")
+        ref.init_from_ply(NDDC_2_path)
+        R, T = ICP(data,ref, method = "point2plane", sampling_limit = 50000)
         bunny_trans = Point_cloud()
-        bunny_trans.init_from_transfo(data, R ,t)
+        bunny_trans.init_from_transfo(data, R ,T)
         bunny_trans.save('./bunny_transformed.ply')
