@@ -3,7 +3,7 @@ import numpy as np
 from Transformation import rot_mat, grad_rot_mat
 from Point_cloud import Point_cloud
 
-def best_transform(data, ref, method = "point2point", indexes_d = None, indexes_r = None):
+def best_transform(data, ref, method = "point2point", indexes_d = None, indexes_r = None, verbose = True):
     """
     Returns the best transformation computed for the two aligned point clouds
     method must be one of :
@@ -24,7 +24,7 @@ def best_transform(data, ref, method = "point2point", indexes_d = None, indexes_
         f = lambda x: loss(x,data.points[indexes_d],ref.points[indexes_r],M)
         df = lambda x: grad_loss(x,data.points[indexes_d],ref.points[indexes_r],M)
 
-        x = fmin_cg(f = f,x0 = x0,fprime = df)
+        x = fmin_cg(f = f,x0 = x0,fprime = df, disp = False)
 
     elif method == "point2plane":
         x0 = np.zeros(6)
@@ -32,7 +32,7 @@ def best_transform(data, ref, method = "point2point", indexes_d = None, indexes_
         f = lambda x: loss(x,data.points[indexes_d],ref.points[indexes_r],M)
         df = lambda x: grad_loss(x,data.points[indexes_d],ref.points[indexes_r],M)
 
-        x = fmin_cg(f = f,x0 = x0,fprime = df)
+        x = fmin_cg(f = f,x0 = x0,fprime = df, disp = False)
 
     elif method == "plane2plane":
         cov_data = data.get_covariance_matrices_plane2plane(indexes = indexes_d)
@@ -40,10 +40,10 @@ def best_transform(data, ref, method = "point2point", indexes_d = None, indexes_
 
         last_min = np.inf
         cpt = 0
-        n_iter_max = 10
+        n_iter_max = 50
         x = np.zeros(6)
         tol = 1e-6
-        while cpt < n_iter_max:
+        while True:
             cpt = cpt+1
             R = rot_mat(x[3:])
             M = np.array([np.linalg.inv(cov_ref[i] + R @ cov_data[i] @ R.T) for i in range(n)])
@@ -55,12 +55,19 @@ def best_transform(data, ref, method = "point2point", indexes_d = None, indexes_
 
             x = out[0]
             f_min = out[1]
+            if verbose:
+                print("\t\t EM style iteration {} with loss {}".format(cpt,f_min))
 
             if last_min - f_min < tol:
+                if verbose:
+                    print("\t\t\t Stopped EM because not enough improvement or not at all")
+                break
+            elif cpt >= n_iter_max:
+                if verbose:
+                    print("\t\t\t Stopped EM because maximum number of iterations reached")
                 break
             else:
                 last_min = f_min
-                print("Successful iteration with loss {}".format(f_min))
 
     else:
         print("Error, unknown method : {}".format(method))
@@ -101,7 +108,7 @@ def grad_loss(x,a,b,M):
     g[3:] = np.sum(grad_R[None,:,:] * grad_R_euler, axis = (1,2)) # chain rule
     return g
 
-def ICP(data,ref,method, sampling_limit = None):
+def ICP(data,ref,method, exclusion_radius = 0.5, sampling_limit = None, verbose = True):
     """
     Full algorithm
     Aligns the two point cloud by iteratively matching the closest points
@@ -113,10 +120,12 @@ def ICP(data,ref,method, sampling_limit = None):
 
     rms_list = []
     cpt = 0
-    max_iter = 10
-    dist_threshold = 0.5
+    max_iter = 50
+    dist_threshold = exclusion_radius
     RMS_threshold = 1e-4
-    while(cpt < max_iter):
+    diff_thresh = 1e-3
+    rms = np.inf
+    while(True):
         if sampling_limit is None:
             samples = np.arange(data.n)
         else:
@@ -130,17 +139,32 @@ def ICP(data,ref,method, sampling_limit = None):
         indexes_d = samples[dist < dist_threshold]
         indexes_r = neighbors[dist < dist_threshold]
 
+        R, T = best_transform(data, ref, method, indexes_d, indexes_r, verbose = verbose)
+        data_aligned.init_from_transfo(data, R,T)
+        new_rms = np.sqrt(np.mean(np.sum((data_aligned.points[samples]-ref.points[neighbors])**2,axis = 0)))
+        rms_list.append(new_rms)
+        if verbose:
+            print("Iteration {} of ICP complete with RMS : {}".format(cpt+1,new_rms))
 
-        rms = np.sqrt(np.mean(np.sum((data_aligned.points[samples]-ref.points[neighbors])**2,axis = 0)))
-        rms_list.append(rms)
-
-        if rms < RMS_threshold:
+        if new_rms < RMS_threshold :
+            if verbose:
+                print("\t Stopped because very low rms")
             break
+        elif rms - new_rms < 0:
 
+            if verbose:
+                print("\t Stopped because increasing rms")
+            break
+        elif rms-new_rms < diff_thresh:
+            if verbose:
+                print("\t Stopped because convergence of the rms")
+            break
+        elif cpt >= max_iter:
+            if verbose:
+                print("\t Max iter reached")
+            break
         else:
-            R, T = best_transform(data, ref, method, indexes_d, indexes_r)
-            data_aligned.init_from_transfo(data, R,T)
+            rms = new_rms
             cpt = cpt+1
-            print(rms)
 
-    return R,T
+    return R,T, rms_list

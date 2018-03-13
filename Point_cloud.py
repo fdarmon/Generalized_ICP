@@ -29,6 +29,7 @@ class Point_cloud:
         self.points = np.vstack((tmp['x'],tmp['y'],tmp['z'])).T
         self._init()
 
+
     def init_from_transfo(self, initial, R = None,t = None):
         """
         Initialize a point cloud from another point cloud and a tranformation
@@ -41,9 +42,21 @@ class Point_cloud:
         self.points = initial.points @ R.T + t
         self._init()
 
+    def init_from_points(self,points):
+        self.points = points.copy()
+        self._init()
+
     def _init(self):
         self.kdtree = KDTree(self.points)
         self.n  = self.points.shape[0]
+        self.all_eigenvalues = None
+        self.all_eigenvectors = None
+        self.nn = None
+
+    def transform(self,R,T):
+        self.points = self.points @ R.T + T
+        if not self.all_eigenvectors is None:
+            self.all_eigenvectors = self.all_eigenvectors @ R.T
 
     def neighborhood_PCA(self):
         """

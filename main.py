@@ -1,8 +1,8 @@
 import numpy as np
-from functions import *
 from Transformation import *
 from Point_cloud import Point_cloud
 from Generalized_ICP import *
+from utils.ply import write_ply
 
 if __name__ == '__main__':
 
@@ -23,16 +23,45 @@ if __name__ == '__main__':
 
     if True:
         # Cloud paths
-        NDDC_1_path = './data/Notre_Dame_Des_Champs_1.ply'
-        NDDC_2_path = './data/Notre_Dame_Des_Champs_2.ply'
+        bunny_path = './data/bunny_original.ply'
+        #bunny_p_path = './data/bunny_perturbed.ply'
 
+        total = Point_cloud()
+        total.init_from_ply(bunny_path)
 
         data = Point_cloud()
-        data.init_from_ply(NDDC_1_path)
-
         ref = Point_cloud()
-        ref.init_from_ply(NDDC_2_path)
-        R, T = ICP(data,ref, method = "point2plane", sampling_limit = 50000)
-        bunny_trans = Point_cloud()
-        bunny_trans.init_from_transfo(data, R ,T)
-        bunny_trans.save('./bunny_transformed.ply')
+
+        n_iter = 50
+        thresholds = [0.001,0.005,0.01,0.05,0.1,1]
+        methods = ["point2point","point2plane","plane2plane"]
+        ref.init_from_points(total.points[15000:])
+        last_rms = np.zeros((len(thresholds),n_iter,len(methods)))
+        for id_t,threshold in enumerate(thresholds):
+            for i in range(n_iter):
+
+                print("Iteration {}".format(i+1))
+
+
+
+                grad_to_deg = 3.14/180
+                R_0 = rot_mat(np.random.uniform(low = -15*grad_to_deg,high = 15*grad_to_deg, size = (3,)))
+
+                T_0 = np.random.uniform(low = -0.01,high = 0.01)
+                data.init_from_points(total.points[:15000])
+
+                data.transform(R_0,T_0)
+                #data.save("./bunny_to_align.ply")
+                #ref.save("./bunny_ref.ply")
+                for id_m,method in enumerate(methods):
+                    print("\t ICP for with {} method".format(method))
+                    R, T, rms_list = ICP(data,ref, method = method, exclusion_radius = threshold ,sampling_limit = None, verbose = False)
+                    last_rms[id_t,i,id_m] = rms_list[-1]
+                    #bunny_trans = Point_cloud()
+                    #bunny_trans.init_from_transfo(data, R ,T)
+                    #bunny_trans.save('./bunny_aligned_{}.ply'.format(method))
+                    #print("***********************************************************")
+
+        for i,method in enumerate(methods):
+            np.savetxt("res_{}.csv".format(method),last_rms[:,:,i])
+        np.savetxt("spec_res.txt",thresholds)
