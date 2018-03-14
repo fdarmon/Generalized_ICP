@@ -36,7 +36,7 @@ def best_transform(data, ref, method = "point2point", indexes_d = None, indexes_
 
     elif method == "plane2plane":
         cov_data = data.get_covariance_matrices_plane2plane(indexes = indexes_d)
-        cov_ref = ref.get_covariance_matrices_plane2plane(indexes = indexes_r)
+        cov_ref = ref.get_covariance_matrices_plane2plane(indexes = indexes_r, epsilon = 0.01)
 
         last_min = np.inf
         cpt = 0

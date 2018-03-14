@@ -63,7 +63,7 @@ class Point_cloud:
         Returns the eigenvalues, eigenvectors for each points on his neighbors
         """
         if self.nn is None:
-            self.nn = self.kdtree.query(self.points,k = 20, return_distance = False)
+            self.nn = self.kdtree.query_radius(self.points,radius = 0.005, return_distance = False)
 
         all_eigenvalues = np.zeros((self.n, 3))
         all_eigenvectors = np.zeros((self.n, 3, 3))
