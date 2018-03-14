@@ -33,7 +33,7 @@ if __name__ == '__main__':
         ref = Point_cloud()
 
         n_iter = 50
-        thresholds = [0.005,0.01,0.015,0.02,0.025,0.03]
+        thresholds = [0.0025,0.0075,0.0125,0.0175,0.0225,0.0275]
         methods = ["point2point","point2plane","plane2plane"]
         ref.init_from_points(total.points[5000:])
         last_rms = np.zeros((len(thresholds),n_iter,len(methods)))
@@ -50,7 +50,7 @@ if __name__ == '__main__':
                 #data.save("./bunny_to_align.ply")
                 #ref.save("./bunny_ref.ply")
                 for id_m,method in enumerate(methods):
-                    print("\t ICP for with {} method".format(method))
+                    print("\t ICP with {} method".format(method))
                     R, T, rms_list = ICP(data,ref, method = method, exclusion_radius = threshold ,sampling_limit = None, verbose = False)
                     last_rms[id_t,i,id_m] = rms_list[-1]
                     #bunny_trans = Point_cloud()
