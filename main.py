@@ -37,6 +37,8 @@ if __name__ == '__main__':
         methods = ["point2point","point2plane","plane2plane"]
         ref.init_from_points(total.points[5000:])
         last_rms = np.zeros((len(thresholds),n_iter,len(methods)))
+        np.savetxt("spec_res.txt",thresholds)
+
         for id_t,threshold in enumerate(thresholds):
             for i in range(n_iter):
                 print("Iteration {}".format(i+1))
@@ -53,11 +55,8 @@ if __name__ == '__main__':
                     print("\t ICP with {} method".format(method))
                     R, T, rms_list = ICP(data,ref, method = method, exclusion_radius = threshold ,sampling_limit = None, verbose = False)
                     last_rms[id_t,i,id_m] = rms_list[-1]
+                    np.savetxt("res_{}.csv".format(method),last_rms[:,:,id_m])
                     #bunny_trans = Point_cloud()
                     #bunny_trans.init_from_transfo(data, R ,T)
                     #bunny_trans.save('./bunny_aligned_{}.ply'.format(method))
                     #print("***********************************************************")
-
-        for i,method in enumerate(methods):
-            np.savetxt("res_{}.csv".format(method),last_rms[:,:,i])
-        np.savetxt("spec_res.txt",thresholds)
