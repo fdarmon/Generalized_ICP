@@ -1,2 +1,12 @@
 # Generalized_ICP
-WIP Project on the Generalized ICP method for point cloud matching. (Part of MVA point cloud course)
+
+Project part of the point cloud course in master MVA. More detail in the pdf [report]<./report.pdf>
+
+## Implementation of [Generalized-ICP](www.roboticsproceedings.org/rss05/p21.pdf)
+  - Point2point method
+  - Point2plane method
+  - Plane2plane method
+  
+## Experiments to compare the methods
+ 
+
