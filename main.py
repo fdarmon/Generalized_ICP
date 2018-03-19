@@ -6,7 +6,7 @@ from utils.ply import write_ply
 
 if __name__ == '__main__':
 
-    if False:
+    if False: # Script for gradient check
         theta = np.array([2,-1,0.5])
         print(rot_mat(theta))
 
@@ -21,10 +21,9 @@ if __name__ == '__main__':
             print((rot_mat(theta + epsilon_vec) - rot_mat(theta - epsilon_vec))/2/epsilon)
 
 
-    if True:
+    if True: # Script to test on several simulations the methods on several thresholds
         # Cloud paths
         bunny_path = './data/bunny_original.ply'
-        #bunny_p_path = './data/bunny_perturbed.ply'
 
         total = Point_cloud()
         total.init_from_ply(bunny_path)
@@ -33,8 +32,10 @@ if __name__ == '__main__':
         ref = Point_cloud()
 
         n_iter = 50
-        thresholds = [0.0025,0.0075,0.0125,0.0175,0.0225,0.0275]
+        thresholds = [0.07,0.08,0.09,0.1,0.11,0.12]
         methods = ["point2point","point2plane","plane2plane"]
+
+        # Initailization of the reference cloud
         ref.init_from_points(total.points[5000:])
         last_rms = np.zeros((len(thresholds),n_iter,len(methods)))
         np.savetxt("spec_res.txt",thresholds)
@@ -43,20 +44,18 @@ if __name__ == '__main__':
             for i in range(n_iter):
                 print("Iteration {}".format(i+1))
                 grad_to_deg = 3.14/180
+
+                # random transformation
                 R_0 = rot_mat(np.random.uniform(low = -15*grad_to_deg,high = 15*grad_to_deg, size = (3,)))
-
                 T_0 = np.random.uniform(low = -0.01,high = 0.01)
-                data.init_from_points(total.points[:10000])
 
+
+                # initialization of the cloud to align
+                data.init_from_points(total.points[:10000])
                 data.transform(R_0,T_0)
-                #data.save("./bunny_to_align.ply")
-                #ref.save("./bunny_ref.ply")
+
                 for id_m,method in enumerate(methods):
                     print("\t ICP with {} method".format(method))
                     R, T, rms_list = ICP(data,ref, method = method, exclusion_radius = threshold ,sampling_limit = None, verbose = False)
                     last_rms[id_t,i,id_m] = rms_list[-1]
                     np.savetxt("res_{}.csv".format(method),last_rms[:,:,id_m])
-                    #bunny_trans = Point_cloud()
-                    #bunny_trans.init_from_transfo(data, R ,T)
-                    #bunny_trans.save('./bunny_aligned_{}.ply'.format(method))
-                    #print("***********************************************************")

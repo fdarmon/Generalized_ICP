@@ -1,3 +1,8 @@
+### =============================================================== ###
+### Unseful function for dealing with rotation as matrix and        ###
+### euler angles                                                    ###
+### =============================================================== ###
+
 import numpy as np
 
 def elementary_rot_mat(theta):
@@ -28,7 +33,7 @@ def elementary_rot_mat(theta):
 def rot_mat(theta) :
     """
     Returns the Rotation matrix for the rotation parametrized with theta
-    Convention X, Y, Z
+    Convention rotation around X then around Y then around Z
     """
     R_x,R_y,R_z = elementary_rot_mat(theta)
     R = R_z @ R_y @ R_x

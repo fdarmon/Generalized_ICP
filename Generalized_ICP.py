@@ -6,11 +6,20 @@ from Point_cloud import Point_cloud
 def best_transform(data, ref, method = "point2point", indexes_d = None, indexes_r = None, verbose = True):
     """
     Returns the best transformation computed for the two aligned point clouds
-    method must be one of :
-        point2point
-        point2plane
-        plane2plane
+
+    params:
+        data: point cloud to align (shape n*3)
+        ref: reference point cloud (shape n*3)
+        method: must be one of : point2point, point2plane, plane2plane
+        indexes_d: integer array Indexes and order to take into account in data
+        indexes_r: integer array Indexes and order to take into account in ref
+        verbose: Whether to plot the result of the iterations of conjugate gradient in plane2plane
+
+    Returns:
+        R: a rotation matrix (shape 3*3)
+        t: translation (length 3 vector)
     """
+
     if indexes_d is None:
         indexes_d = np.arange(data.shape[0])
     if indexes_r is None:
@@ -81,9 +90,16 @@ def best_transform(data, ref, method = "point2point", indexes_d = None, indexes_
 def loss(x,a,b,M):
     """
     loss for parameter x
-    a : data to align n*3
-    b : ref point cloud n*3
-    M : central matrix for each data point n*3*3
+
+    params:
+        x : length 6 vector of transformation parameters
+            (t_x,t_y,t_z, theta_x, theta_y, theta_z)
+        a : data to align n*3
+        b : ref point cloud n*3 a[i] is the nearest neibhor of Rb[i]+t
+        M : central matrix for each data point n*3*3 (cf loss equation)
+
+    returns:
+        Value of the loss function
     """
     t = x[:3]
     R = rot_mat(x[3:])
@@ -93,7 +109,17 @@ def loss(x,a,b,M):
 
 def grad_loss(x,a,b,M):
     """
-    Gradient on x of the loss
+    Gradient of the loss loss for parameter x
+
+    params:
+        x : length 6 vector of transformation parameters
+            (t_x,t_y,t_z, theta_x, theta_y, theta_z)
+        a : data to align n*3
+        b : ref point cloud n*3 a[i] is the nearest neibhor of Rb[i]+t
+        M : central matrix for each data point n*3*3 (cf loss equation)
+
+    returns:
+        Value of the gradient of the loss function
     """
     t = x[:3]
     R = rot_mat(x[3:])
@@ -112,7 +138,18 @@ def ICP(data,ref,method, exclusion_radius = 0.5, sampling_limit = None, verbose 
     """
     Full algorithm
     Aligns the two point cloud by iteratively matching the closest points
+    params:
+        data: point cloud to align (shape N*3)
+        ref:
+        method: one of point2point, point2plane, plane2plane
+        exclusion_radius: threshold to discard pairs of point with too high distance
+        sampling_limit: number of point to consider for huge point clouds
+        verbose: whether to plot the results of the iterations and verbose of intermediate functions
 
+    returns:
+        R: rotation matrix (shape 3*3)
+        T: translation (length 3)
+        rms_list: list of rms at the end of each ICP iteration
     """
 
     data_aligned = Point_cloud()
